@@ -1,4 +1,4 @@
-<dfForm action="${artistsCreatePath}">
+<dfForm action="${formAction}">
   <dfLabel ref="name">Name</dfLabel>
   <dfInputText ref="name"/>
   <br/>
@@ -24,7 +24,7 @@
   <dfInputText ref="focus"/>
   <br/>
   <dfLabel ref="notes">Notes</dfLabel>
-  <dfInputText ref="notes"/>
+  <dfInputTextArea ref="notes"/>
   <br/>
   <dfInputSubmit/>
 </dfForm>

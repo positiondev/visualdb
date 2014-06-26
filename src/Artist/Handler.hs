@@ -3,10 +3,13 @@
 module Artist.Handler (artistsResource, artistsCrud) where
 
 import Data.Maybe
+import Data.Monoid
 import Snap hiding (get)
 import Snap.Restful
 import Text.Digestive.Snap
+import qualified Data.ByteString as B
 import qualified Data.ByteString.Char8 as B8
+import qualified Data.Text.Encoding as T
 import Database.Groundhog
 import Snap.Snaplet.Groundhog.Postgresql
 import Database.Groundhog.Utils hiding (intToKey)
@@ -23,8 +26,8 @@ artistsResource = Resource "artists" "/admin/artists" [] []
 artistsCrud :: [(CRUD, Handler App App ())]
 artistsCrud = [ (RNew, newCreateH)
               , (RShow, showH)
-              , (REdit, editH)
-              , (RUpdate, updateH)
+              , (REdit, editUpdateH)
+              , (RUpdate, editUpdateH)
               , (RCreate, newCreateH)
               , (RIndex, indexH)
               ]
@@ -54,11 +57,22 @@ showH = do i <- getId
              Nothing -> pass
              Just e -> renderWithSplices "artist/show" (artistSplices (Entity k e))
 
-editH :: AppHandler ()
-editH = undefined
-
-updateH :: AppHandler ()
-updateH = undefined
+editUpdateH :: AppHandler ()
+editUpdateH =
+  do i <- getId
+     let k = intToKey i
+     me <- runGH $ get k
+     case me of
+       Nothing -> pass
+       Just e ->
+         do r <- runForm "edit" (formlet (Just e))
+            case r of
+              (v, Nothing) -> renderWithSplices "artist/edit"
+                                                (digestiveSplices v <> artistSplices (Entity k e))
+              (_, Just artist) ->
+                do runGH $ replace k (artist :: Artist)
+                   redirect $ B.concat [T.encodeUtf8 $ rootPath artistsResource,
+                                       "/", B8.pack $ show i]
 
 
 indexH :: AppHandler ()

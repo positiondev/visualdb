@@ -18,6 +18,8 @@ import           Snap.Snaplet.Session.Backends.CookieSession
 import           Snap.Util.FileServe
 import           Heist
 import qualified Heist.Interpreted as I
+import           Heist.Splices.BindStrict
+import qualified Text.XmlHtml as X
 
 import           Database.Groundhog.Utils
 import           Snap.Snaplet.Groundhog.Postgresql
@@ -27,39 +29,39 @@ import           Artist.Types
 import           Artist.Handler
 import           Application
 
-handleLogin :: Maybe T.Text -> Handler App (AuthManager App) ()
-handleLogin authError = heistLocal (I.bindSplices errs) $ render "login"
-  where
-    errs = maybe noSplices splice authError
-    splice err = "loginError" ## I.textSplice err
+logoutH :: Handler App (AuthManager App) ()
+logoutH = logout >> redirect "/"
 
-handleLoginSubmit :: Handler App (AuthManager App) ()
-handleLoginSubmit =
-    loginUser "login" "password" Nothing
-              (\_ -> handleLogin err) (redirect "/")
-  where
-    err = Just "Unknown user or password"
 
-handleLogout :: Handler App (AuthManager App) ()
-handleLogout = logout >> redirect "/"
+loginH :: AppHandler ()
+loginH = (method GET  $ renderWithSplices "login" ("err" ## return [])) <|>
+         (method POST $ with auth $
+            loginUser "login" "password" Nothing
+                      (const (renderWithSplices "login" $
+                                do "err" ## I.runChildrenWithText ("msg" ## msg)))
+                      (redirect "/"))
+  where msg = "Unknown user or password"
 
-handleNewUser :: Handler App (AuthManager App) ()
-handleNewUser = method GET handleForm <|> method POST handleFormSubmit
-  where
-    handleForm = render "new_user"
-    handleFormSubmit = registerUser "login" "password" >> redirect "/"
-
+signupH :: AppHandler ()
+signupH = (method GET  $ render "signup") <|>
+          (method POST $ with auth $
+            registerUser "login" "password" >> redirect "/")
 
 routes :: [(ByteString, Handler App App ())]
-routes = [ ("/login",    with auth handleLoginSubmit)
-         , ("/logout",   with auth handleLogout)
-         , ("/new_user", with auth handleNewUser)
+routes = [ ("/login",    loginH)
+         , ("/logout",   with auth logoutH)
+         , ("/new_user", signupH)
          , ("",          serveDirectory "static")
          ]
 
 globalSplices =
   do "allArtists" ## do artists <- lift $ runGH $ selectAll
                         I.mapSplices (I.runChildrenWith . artistSplices . uncurry Entity) artists
+     "requireLogin" ## do isLI <- lift $ with auth isLoggedIn
+                          case isLI of
+                            True -> return []
+                            False -> redirect "/login"
+     "bindStrict" ## bindStrictImpl
 
 app :: SnapletInit App App
 app = makeSnaplet "app" "" Nothing $ do

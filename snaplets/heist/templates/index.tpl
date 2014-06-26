@@ -1,14 +1,8 @@
-<apply template="base">
+<apply template="page">
 
-  <ifLoggedIn>
-    <allArtists>
-      <a href="${artistsPath}/${id}"><name/></a><brA/>
-    </allArtists>
-    <p><a href="/logout">Logout</a></p>
-  </ifLoggedIn>
+  <div class="container">
 
-  <ifLoggedOut>
-    <apply template="_login"/>
-  </ifLoggedOut>
+
+  </div>
 
 </apply>
