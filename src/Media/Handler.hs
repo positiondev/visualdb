@@ -19,9 +19,13 @@ import Snap.Snaplet.Heist
 import Text.Digestive
 import Text.Digestive.Heist
 import Snap.Util.FileUploads
+import Snap.Extras
+import Heist
+import Heist.Interpreted
 
 import Media.Types
 import Application
+import Helpers
 
 runForm' :: MonadSnap m	=> Text -> Form v m a -> m (View v, Maybe a)
 runForm' = runFormWith (defaultSnapFormConfig { uploadPolicy = setMaximumFormInputSize tenmegs defaultUploadPolicy
@@ -38,15 +42,24 @@ mediaCrud = [ (RNew, newH)
             , (RUpdate, editH)
             , (RCreate, newH)
             , (RIndex, indexH)
+            , (RDestroy, destroyH)
             ]
 
 
 newH :: AppHandler ()
 newH = do r <- runForm' "new" (formletMedia Nothing)
           case r of
-            (v, Nothing) -> renderWithSplices "media/new" (digestiveSplices v)
+            (v, Nothing) ->
+              do aid <- getParam "artist_id"
+                 ref <- getParam "referer"
+                 renderWithSplices "media/new"
+                                   (do digestiveSplices v
+                                       "artist_id" ## textSplice (T.decodeUtf8 $ fromMaybe "" aid)
+                                       "referer" ## textSplice (T.decodeUtf8 $ fromMaybe "" ref))
+
             (_, Just media) -> do runGH $ insert_ (media :: Media)
-                                  redirect (T.encodeUtf8 $ rootPath mediaResource)
+                                  ref <- getParam "referer"
+                                  redirect (fromMaybe (T.encodeUtf8 $ rootPath mediaResource) ref)
 
 showH :: AppHandler ()
 showH = undefined
@@ -56,3 +69,10 @@ editH = undefined
 
 indexH :: AppHandler ()
 indexH = render "media/index"
+
+
+destroyH :: AppHandler ()
+destroyH = do i <- getId
+              let k = intToKey i :: AutoKey Media
+              runGH $ deleteBy k
+              redirectReferer

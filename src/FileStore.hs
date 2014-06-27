@@ -5,7 +5,7 @@ import Control.Applicative
 import Data.Text (Text)
 import qualified Data.Text as T
 import Control.Monad.Trans (liftIO)
-import System.Directory (copyFile, doesFileExist)
+import System.Directory (copyFile, doesFileExist, removeFile)
 import System.Random (randomRIO)
 import System.FilePath (takeExtension, addExtension, pathSeparator)
 
@@ -23,3 +23,12 @@ storeFile store@(Directory dir) old Nothing =
        False -> do
          liftIO $ copyFile old full
          return $ T.pack $ "/store/" ++ new
+
+deleteFile :: (Functor m, MonadIO m) => FileStore -> Text -> m ()
+deleteFile store@(Directory dir) url =
+  do let file = T.unpack $ T.drop 7 url
+     let path = dir ++ [pathSeparator] ++ file
+     e <- liftIO $ doesFileExist path
+     case e of
+       True -> liftIO $ removeFile path
+       False -> return ()

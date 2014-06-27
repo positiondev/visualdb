@@ -2,12 +2,13 @@
 
   <div class="container">
 
-    <dfForm action="${mediaCreatePath}">
-      <dfLabel ref="file">File</dfLabel>
-      <dfInputFile ref="file"/>
-      <dfInputHidden ref="artist_id" value="1"/>
-      <br/>
-      <dfInputSubmit/>
+    <dfForm role="form" action="${mediaCreatePath}?referer=${referer}">
+      <div class="form-group">
+        <dfLabel ref="file">File</dfLabel>
+        <dfInputFile ref="file"/>
+      </div>
+      <dfInputHidden ref="artist_id" value="${artist_id}"/>
+      <dfInputSubmit class="btn"/>
     </dfForm>
 
   </div>

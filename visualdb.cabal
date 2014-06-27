@@ -46,7 +46,8 @@ Executable visualdb
     neat-interpolation,
     filepath,
     random,
-    directory
+    directory,
+    snap-extras
 
   if flag(old-base)
     build-depends:

@@ -24,7 +24,6 @@
               </allArtists>
             </ul>
           </li>
-          <li><a href="${mediaIndexPath}">Media</a></li>
 
         </ul>
         <form class="navbar-form navbar-left" role="search">

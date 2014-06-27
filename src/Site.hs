@@ -24,10 +24,12 @@ import qualified Text.XmlHtml as X
 import           Database.Groundhog.Utils
 import           Snap.Snaplet.Groundhog.Postgresql
 import           Snap.Restful
+import           Snap.Extras
 
 import           FileStore
 import           Artist.Types
 import           Artist.Handler
+import           Artist.Splices
 import           Media.Types
 import           Media.Handler
 import           Application
@@ -37,12 +39,15 @@ logoutH = logout >> redirect "/"
 
 
 loginH :: AppHandler ()
-loginH = (method GET  $ renderWithSplices "login" ("err" ## return [])) <|>
-         (method POST $ with auth $
-            loginUser "login" "password" Nothing
-                      (const (renderWithSplices "login" $
-                                do "err" ## I.runChildrenWithText ("msg" ## msg)))
-                      (redirect "/"))
+loginH = do isl <- with auth isLoggedIn
+            if isl
+               then redirect "/"
+               else (method GET  $ renderWithSplices "login" ("err" ## return [])) <|>
+                    (method POST $ with auth $
+                    loginUser "login" "password" Nothing
+                              (const (renderWithSplices "login" $
+                                        "err" ## I.runChildrenWithText ("msg" ## msg)))
+                              redirectReferer)
   where msg = "Unknown user or password"
 
 signupH :: AppHandler ()
@@ -84,6 +89,7 @@ app = makeSnaplet "app" "" Nothing $ do
     gh <- nestSnaplet "gh" gh initGroundhogPostgres
     addRoutes routes
     addResource artistsResource artistsCrud [] [] h
+    addResource subjectsResource subjectsCrud [] [] h
     addResource mediaResource mediaCrud [] [] h
     addConfig h mempty { hcInterpretedSplices = globalSplices }
     addAuthSplices h auth

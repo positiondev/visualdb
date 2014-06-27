@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings, ScopedTypeVariables #-}
 
-module Artist.Handler (artistsResource, artistsCrud) where
+module Artist.Handler (artistsResource, artistsCrud, subjectsResource, subjectsCrud) where
 
 import Data.Maybe
 import Data.Monoid
@@ -18,7 +18,9 @@ import Snap.Snaplet.Heist
 import Text.Digestive.Heist
 
 import Artist.Types
+import Artist.Splices
 import Application
+import Helpers
 
 artistsResource :: Resource
 artistsResource = Resource "artists" "/admin/artists" [] []
@@ -33,17 +35,9 @@ artistsCrud = [ (RNew, newH)
               ]
 
 
-readSafe :: Read a => String -> Maybe a
-readSafe = fmap fst . listToMaybe . reads
-
-getId :: AppHandler Int
-getId = do mi <- getParam "id"
-           case readSafe . B8.unpack =<<  mi  of
-             Nothing -> pass
-             Just i -> return i
 
 newH :: AppHandler ()
-newH = do r <- runForm "new" (formlet Nothing)
+newH = do r <- runForm "new" (formletArtist Nothing)
           case r of
             (v, Nothing) -> renderWithSplices "artist/new" (digestiveSplices v)
             (_, Just artist) -> do runGH $ insert_ (artist :: Artist)
@@ -65,7 +59,7 @@ editH =
      case me of
        Nothing -> pass
        Just e ->
-         do r <- runForm "edit" (formlet (Just e))
+         do r <- runForm "edit" (formletArtist (Just e))
             case r of
               (v, Nothing) -> renderWithSplices "artist/edit"
                                                 (digestiveSplices v <> artistSplices (Entity k e))
@@ -77,3 +71,20 @@ editH =
 
 indexH :: AppHandler ()
 indexH = undefined
+
+
+subjectsResource :: Resource
+subjectsResource = Resource "subjects" "/admin/subjects" [] []
+
+subjectsCrud :: [(CRUD, Handler App App ())]
+subjectsCrud = [ (RNew, snewH)
+               , (RCreate, snewH)
+               ]
+
+
+snewH :: AppHandler ()
+snewH = do r <- runForm "new" (formlet Nothing)
+           case r of
+             (v, Nothing) -> renderWithSplices "subject/new" (digestiveSplices v)
+             (_, Just subject) -> do runGH $ insert_ (subject :: Subject)
+                                     redirect "/"
