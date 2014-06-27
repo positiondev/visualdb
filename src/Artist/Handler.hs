@@ -24,11 +24,11 @@ artistsResource :: Resource
 artistsResource = Resource "artists" "/admin/artists" [] []
 
 artistsCrud :: [(CRUD, Handler App App ())]
-artistsCrud = [ (RNew, newCreateH)
+artistsCrud = [ (RNew, newH)
               , (RShow, showH)
-              , (REdit, editUpdateH)
-              , (RUpdate, editUpdateH)
-              , (RCreate, newCreateH)
+              , (REdit, editH)
+              , (RUpdate, editH)
+              , (RCreate, newH)
               , (RIndex, indexH)
               ]
 
@@ -42,12 +42,12 @@ getId = do mi <- getParam "id"
              Nothing -> pass
              Just i -> return i
 
-newCreateH :: AppHandler ()
-newCreateH = do r <- runForm "new" (formlet Nothing)
-                case r of
-                  (v, Nothing) -> renderWithSplices "artist/new" (digestiveSplices v)
-                  (_, Just artist) -> do runGH $ insert_ (artist :: Artist)
-                                         redirect "/"
+newH :: AppHandler ()
+newH = do r <- runForm "new" (formlet Nothing)
+          case r of
+            (v, Nothing) -> renderWithSplices "artist/new" (digestiveSplices v)
+            (_, Just artist) -> do runGH $ insert_ (artist :: Artist)
+                                   redirect "/"
 
 showH :: AppHandler ()
 showH = do i <- getId
@@ -57,8 +57,8 @@ showH = do i <- getId
              Nothing -> pass
              Just e -> renderWithSplices "artist/show" (artistSplices (Entity k e))
 
-editUpdateH :: AppHandler ()
-editUpdateH =
+editH :: AppHandler ()
+editH =
   do i <- getId
      let k = intToKey i
      me <- runGH $ get k

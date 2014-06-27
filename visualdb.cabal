@@ -43,7 +43,10 @@ Executable visualdb
     digestive-functors,
     digestive-functors-snap,
     digestive-functors-heist,
-    neat-interpolation
+    neat-interpolation,
+    filepath,
+    random,
+    directory
 
   if flag(old-base)
     build-depends:

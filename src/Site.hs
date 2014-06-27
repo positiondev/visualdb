@@ -25,8 +25,11 @@ import           Database.Groundhog.Utils
 import           Snap.Snaplet.Groundhog.Postgresql
 import           Snap.Restful
 
+import           FileStore
 import           Artist.Types
 import           Artist.Handler
+import           Media.Types
+import           Media.Handler
 import           Application
 
 logoutH :: Handler App (AuthManager App) ()
@@ -51,12 +54,15 @@ routes :: [(ByteString, Handler App App ())]
 routes = [ ("/login",    loginH)
          , ("/logout",   with auth logoutH)
          , ("/new_user", signupH)
+         , ("/store",    serveDirectory "store")
          , ("",          serveDirectory "static")
          ]
 
 globalSplices =
   do "allArtists" ## do artists <- lift $ runGH $ selectAll
                         I.mapSplices (I.runChildrenWith . artistSplices . uncurry Entity) artists
+     "allMedia" ## do media <- lift $ runGH $ selectAll
+                      I.mapSplices (I.runChildrenWith . mediaSplices . uncurry Entity) media
      "requireLogin" ## do isLI <- lift $ with auth isLoggedIn
                           case isLI of
                             True -> return []
@@ -78,6 +84,7 @@ app = makeSnaplet "app" "" Nothing $ do
     gh <- nestSnaplet "gh" gh initGroundhogPostgres
     addRoutes routes
     addResource artistsResource artistsCrud [] [] h
+    addResource mediaResource mediaCrud [] [] h
     addConfig h mempty { hcInterpretedSplices = globalSplices }
     addAuthSplices h auth
-    return $ App h s a gh
+    return $ App h s a gh (Directory "/home/dbp/code/visualdb/store")

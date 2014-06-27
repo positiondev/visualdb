@@ -14,12 +14,15 @@ import Snap.Snaplet.Auth
 import Snap.Snaplet.Session
 import Snap.Snaplet.Groundhog.Postgresql hiding (get)
 
+import FileStore
+
 ------------------------------------------------------------------------------
 data App = App
     { _heist :: Snaplet (Heist App)
     , _sess :: Snaplet SessionManager
     , _auth :: Snaplet (AuthManager App)
     , _gh :: Snaplet GroundhogPostgres
+    , _filestore :: FileStore
     }
 
 makeLenses ''App
