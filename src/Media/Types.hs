@@ -24,7 +24,6 @@ import Heist
 import Heist.Interpreted
 
 import FileStore
-import Artist.Types
 import Application
 
 

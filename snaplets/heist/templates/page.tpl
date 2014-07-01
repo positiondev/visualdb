@@ -24,6 +24,12 @@
               </allArtists>
             </ul>
           </li>
+          <li><a href="${subjectsIndexPath}">Subjects</a></li>
+          <li><a href="${subjectsNewPath}">New Subject</a></li>
+
+          <li><a href="${focusesIndexPath}">Focuses</a></li>
+          <li><a href="${focusesNewPath}">New Focus</a></li>
+
 
         </ul>
         <form class="navbar-form navbar-left" role="search">

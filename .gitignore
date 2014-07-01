@@ -3,3 +3,4 @@ dist/
 log/
 users.json
 cabal.sandbox.config
+*#*

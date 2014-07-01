@@ -12,8 +12,21 @@
         <strong>Website:</strong> <a href="${website}"><website/></a><br/>
         <strong>Agency:</strong> <agency/><br/>
         <strong>Location:</strong> <city/>, <country/><br/>
-        <strong>Focus:</strong> <focus/><br/>
-        <strong>Subject:</strong> <subject/><br/>
+        <strong>Focus:</strong>
+        <a href="${artistFocusesNewPath}?artist_id=${id}" class="btn btn-info">add</a>
+
+        <focuses><span class="btn btn-default"><title/></span>
+          <form method="post" style="display: inline" action="${artistFocusesPath}/${id}/destroy"><button class="btn btn-danger" type="submit" onclick="return confirm('Are you sure?')">x</button></form>
+        </focuses>
+        <br/>
+
+        <strong>Subjects:</strong>
+        <a href="${artistSubjectsNewPath}?artist_id=${id}" class="btn btn-info">add</a>
+
+        <subjects><span class="btn btn-default"><title/></span>
+          <form method="post" style="display: inline" action="${artistSubjectsPath}/${id}/destroy"><button class="btn btn-danger" type="submit" onclick="return confirm('Are you sure?')">x</button></form>
+        </subjects>
+        <br/>
         <strong>Notes:</strong><p><notes/></p>
       </div>
     </div>

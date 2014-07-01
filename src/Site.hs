@@ -32,6 +32,8 @@ import           Artist.Handler
 import           Artist.Splices
 import           Media.Types
 import           Media.Handler
+import           Subject.Handler
+import           Focus.Handler
 import           Application
 
 logoutH :: Handler App (AuthManager App) ()
@@ -68,6 +70,8 @@ globalSplices =
                         I.mapSplices (I.runChildrenWith . artistSplices . uncurry Entity) artists
      "allMedia" ## do media <- lift $ runGH $ selectAll
                       I.mapSplices (I.runChildrenWith . mediaSplices . uncurry Entity) media
+     "allSubject" ## do ss <- lift $ runGH $ selectAll
+                        I.mapSplices (I.runChildrenWith . subjectSplices . uncurry Entity) ss
      "requireLogin" ## do isLI <- lift $ with auth isLoggedIn
                           case isLI of
                             True -> return []
@@ -90,6 +94,9 @@ app = makeSnaplet "app" "" Nothing $ do
     addRoutes routes
     addResource artistsResource artistsCrud [] [] h
     addResource subjectsResource subjectsCrud [] [] h
+    addResource artistSubjectsResource artistSubjectsCrud [] [] h
+    addResource focusesResource focusesCrud [] [] h
+    addResource artistFocusesResource artistFocusesCrud [] [] h
     addResource mediaResource mediaCrud [] [] h
     addConfig h mempty { hcInterpretedSplices = globalSplices }
     addAuthSplices h auth

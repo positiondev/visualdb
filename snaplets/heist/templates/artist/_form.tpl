@@ -17,7 +17,7 @@
   </div>
   <div class="form-group">
     <dfLabel ref="agency">Agency</dfLabel>
-    <dfInputTextArea class="form-control" rows="5" cols="30" ref="agency"/>
+    <dfInputTextArea class="form-control" rows="5" ref="agency"/>
   </div>
   <div class="form-group">
     <dfLabel ref="city">City</dfLabel>
@@ -28,16 +28,8 @@
     <dfInputText class="form-control" ref="country"/>
   </div>
   <div class="form-group">
-    <dfLabel ref="focus">Focus</dfLabel>
-    <dfInputText class="form-control" ref="focus"/>
-  </div>
-  <div class="form-group">
-    <dfLabel ref="subjectId">Subject</dfLabel>
-    <dfInputSelect class="form-control" ref="subjectId"/>
-  </div>
-  <div class="form-group">
     <dfLabel ref="notes">Notes</dfLabel>
-    <dfInputTextArea class="form-control" ref="notes"/>
+    <dfInputTextArea rows="5" class="form-control" ref="notes"/>
   </div>
   <dfInputSubmit class="btn" />
 </dfForm>

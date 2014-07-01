@@ -26,14 +26,6 @@ instance HasFormlet (Maybe Int) where
 
 data ArtistType = Illustrator | Photographer deriving (Eq, Show)
 
-focusList :: ArtistType -> [Text]
-focusList Illustrator = ["Animation", "Editorial", "Covers", "Icons"]
-focusList Photographer = ["Documentary", "Portrait", "Black and White", "Landscape"]
-
-data Subject = Subject { title :: Text
-                       } deriving (Eq, Show)
-
-
 data Artist = Artist { name :: Text
                      , website :: Text
                      , typ :: Text
@@ -41,16 +33,11 @@ data Artist = Artist { name :: Text
                      , agency :: Text
                      , city :: Text
                      , country :: Text
-                     , focus :: Text
-                     , subjectId :: Maybe Int
                      , notes :: Text
-                     }
+                    }
 mkPersist defaultCodegenConfig { namingStyle = lowerCaseSuffixNamingStyle } [groundhog|
-- entity: Subject
 - entity: Artist
 |]
-
-deriveHasFormlet ''Subject
 
 formletArtist v =
   Artist <$> "name" .: text (name <$> v)
@@ -63,7 +50,6 @@ formletArtist v =
          <*> "agency" .: text (agency <$> v)
          <*> "city" .: text (city <$> v)
          <*> "country" .: text (country <$> v)
-         <*> "focus" .: text (focus <$> v)
-         <*> "subjectId" .: (monadic $ do s <- runGH selectAll
-                                          return $ choice ((Nothing, "") : map (\(k,s) -> (Just $ keyToInt k, title s)) s) (subjectId <$> v))
+         -- <*> "subjectId" .: (monadic $ do s <- runGH selectAll
+         --                                  return $ choice ((Nothing, "") : map (\(k,s) -> (Just $ keyToInt k, title s)) s) (subjectId <$> v))
          <*> "notes" .: text (notes <$> v)

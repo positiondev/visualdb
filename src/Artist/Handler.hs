@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings, ScopedTypeVariables #-}
 
-module Artist.Handler (artistsResource, artistsCrud, subjectsResource, subjectsCrud) where
+module Artist.Handler (artistsResource, artistsCrud) where
 
 import Data.Maybe
 import Data.Monoid
@@ -16,8 +16,10 @@ import Database.Groundhog.Utils hiding (intToKey)
 import Database.Groundhog.Utils.Postgresql
 import Snap.Snaplet.Heist
 import Text.Digestive.Heist
+import Heist.Interpreted
 
 import Artist.Types
+import Subject.Types (Subject)
 import Artist.Splices
 import Application
 import Helpers
@@ -71,20 +73,3 @@ editH =
 
 indexH :: AppHandler ()
 indexH = undefined
-
-
-subjectsResource :: Resource
-subjectsResource = Resource "subjects" "/admin/subjects" [] []
-
-subjectsCrud :: [(CRUD, Handler App App ())]
-subjectsCrud = [ (RNew, snewH)
-               , (RCreate, snewH)
-               ]
-
-
-snewH :: AppHandler ()
-snewH = do r <- runForm "new" (formlet Nothing)
-           case r of
-             (v, Nothing) -> renderWithSplices "subject/new" (digestiveSplices v)
-             (_, Just subject) -> do runGH $ insert_ (subject :: Subject)
-                                     redirect "/"
