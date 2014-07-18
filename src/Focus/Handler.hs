@@ -23,7 +23,7 @@ import Heist.Interpreted
 
 import Artist.Types
 import Artist.Handler (artistsResource)
-import Focus.Types (Focus, ArtistFocus, formArtistFocus)
+import Focus.Types
 import Artist.Splices
 import Application
 import Helpers
@@ -33,9 +33,11 @@ focusesResource = Resource "focuses" "/admin/focuses" [] []
 
 focusesCrud :: [(CRUD, AppHandler ())]
 focusesCrud = [ (RNew, newH)
-                     , (RCreate, newH)
-                     , (RIndex, indexH)
-                     ]
+              , (RCreate, newH)
+              , (RIndex, indexH)
+              , (RShow, showH)
+              , (RDestroy, destroyH)
+              ]
 
 
 newH :: AppHandler ()
@@ -48,6 +50,28 @@ newH = do r <- runForm "new" (formlet Nothing)
 indexH :: AppHandler ()
 indexH = render "focus/index"
 
+destroyH :: AppHandler ()
+destroyH = do i <- getId
+              let k = intToKey i :: AutoKey Focus
+              runGH $ deleteBy k
+              redirectReferer
+
+showH :: AppHandler ()
+showH =
+  do i <- getId
+     let k = intToKey i :: AutoKey Focus
+     me <- fmap (Entity k) <$> runGH (get k)
+     case me of
+       Nothing -> pass
+       Just e -> do
+         as <- runGH $ selectEntity ArtistFocusConstructor (FocusIdField ==. i)
+         artists <- mapM (\a -> do let k = intToKey (artistId (entityVal a))
+                                   r <- runGH $ get k
+                                   return $ fmap (Entity k) r) as
+         renderWithSplices "focus/show"
+                           (do "artists" ## mapSplices (runChildrenWith.artistSplices) (catMaybes artists)
+                               "count" ## textSplice (T.pack (show (length artists)))
+                               focusSplices e)
 
 artistFocusesResource :: Resource
 artistFocusesResource = Resource "artistFocuses" "/admin/artistfocuses" [] []

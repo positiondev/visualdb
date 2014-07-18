@@ -47,7 +47,8 @@ Executable visualdb
     filepath,
     random,
     directory,
-    snap-extras
+    snap-extras,
+    configurator
 
   if flag(old-base)
     build-depends:

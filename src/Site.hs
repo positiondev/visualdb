@@ -8,6 +8,7 @@ import           Control.Monad.Trans
 import           Control.Applicative
 import           Data.Monoid
 import           Data.ByteString (ByteString)
+import qualified Data.ByteString as B
 import qualified Data.Text as T
 import           Snap.Core
 import           Snap.Snaplet
@@ -20,6 +21,7 @@ import           Heist
 import qualified Heist.Interpreted as I
 import           Heist.Splices.BindStrict
 import qualified Text.XmlHtml as X
+import qualified Data.Configurator as C
 
 import           Database.Groundhog.Utils
 import           Snap.Snaplet.Groundhog.Postgresql
@@ -57,13 +59,13 @@ signupH = (method GET  $ render "signup") <|>
           (method POST $ with auth $
             registerUser "login" "password" >> redirect "/")
 
-routes :: [(ByteString, Handler App App ())]
-routes = [ ("/login",    loginH)
-         , ("/logout",   with auth logoutH)
-         , ("/new_user", signupH)
-         , ("/store",    serveDirectory "store")
-         , ("",          serveDirectory "static")
-         ]
+routes :: String -> [(ByteString, Handler App App ())]
+routes stpth = [ ("/login",    loginH)
+               , ("/logout",   with auth logoutH)
+               , ("/new_user", signupH)
+               , ("/store",    serveDirectory (stpth ++ "/store"))
+               , ("",          serveDirectory "static")
+               ]
 
 globalSplices =
   do "allArtists" ## do artists <- lift $ runGH $ selectAll
@@ -72,6 +74,8 @@ globalSplices =
                       I.mapSplices (I.runChildrenWith . mediaSplices . uncurry Entity) media
      "allSubject" ## do ss <- lift $ runGH $ selectAll
                         I.mapSplices (I.runChildrenWith . subjectSplices . uncurry Entity) ss
+     "allFocus" ## do ss <- lift $ runGH $ selectAll
+                      I.mapSplices (I.runChildrenWith . focusSplices . uncurry Entity) ss
      "requireLogin" ## do isLI <- lift $ with auth isLoggedIn
                           case isLI of
                             True -> return []
@@ -80,18 +84,20 @@ globalSplices =
 
 app :: SnapletInit App App
 app = makeSnaplet "app" "" Nothing $ do
+    conf <- getSnapletUserConfig
+    stpth <- liftIO (C.require conf "staticPath")
     h <- nestSnaplet "" heist $ heistInit "templates"
     s <- nestSnaplet "sess" sess $
-           initCookieSessionManager "site_key.txt" "sess" (Just 3600)
+           initCookieSessionManager (stpth ++ "/site_key.txt") "sess" (Just 3600)
 
     -- NOTE: We're using initJsonFileAuthManager here because it's easy and
     -- doesn't require any kind of database server to run.  In practice,
     -- you'll probably want to change this to a more robust auth backend.
     a <- nestSnaplet "auth" auth $
-           initJsonFileAuthManager defAuthSettings sess "users.json"
+           initJsonFileAuthManager defAuthSettings sess (stpth ++ "/users.json")
 
     gh <- nestSnaplet "gh" gh initGroundhogPostgres
-    addRoutes routes
+    addRoutes (routes stpth)
     addResource artistsResource artistsCrud [] [] h
     addResource subjectsResource subjectsCrud [] [] h
     addResource artistSubjectsResource artistSubjectsCrud [] [] h
@@ -100,4 +106,4 @@ app = makeSnaplet "app" "" Nothing $ do
     addResource mediaResource mediaCrud [] [] h
     addConfig h mempty { hcInterpretedSplices = globalSplices }
     addAuthSplices h auth
-    return $ App h s a gh (Directory "/home/dbp/code/visualdb/store")
+    return $ App h s a gh (Directory (stpth ++ "/store"))

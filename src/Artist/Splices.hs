@@ -33,8 +33,8 @@ artistSplices a =
           ss <- mapM (\a -> do let k = (intToKey $ S.subjectId $ entityVal a)
                                s <- lift $ runGH $ get k
                                return $ maybe Nothing (Just . Entity (intToKey .
-                                                                      keyToInt .
-                                                                      entityKey $ a)) s) as
+                                                                      S.subjectId .
+                                                                      entityVal $ a)) s) as
           mapSplices (runChildrenWith . subjectSplices) (catMaybes ss)
      "focuses" ##
        do as <- lift $ runGH $ selectEntity F.ArtistFocusConstructor
@@ -42,8 +42,8 @@ artistSplices a =
           ss <- mapM (\a -> do let k = (intToKey $ F.focusId $ entityVal a)
                                s <- lift $ runGH $ get k
                                return $ maybe Nothing (Just . Entity (intToKey .
-                                                                      keyToInt .
-                                                                      entityKey $ a)) s) as
+                                                                      F.focusId .
+                                                                      entityVal $ a)) s) as
           mapSplices (runChildrenWith . focusSplices) (catMaybes ss)
 
 artistSplices' :: Artist -> Splices (Splice AppHandler)

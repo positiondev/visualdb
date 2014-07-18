@@ -23,7 +23,7 @@ import Heist.Interpreted
 
 import Artist.Types
 import Artist.Handler (artistsResource)
-import Subject.Types (Subject, ArtistSubject, formArtistSubject)
+import Subject.Types
 import Artist.Splices
 import Application
 import Helpers
@@ -35,6 +35,8 @@ subjectsCrud :: [(CRUD, AppHandler ())]
 subjectsCrud = [ (RNew, newH)
                , (RCreate, newH)
                , (RIndex, indexH)
+               , (RShow, showH)
+               , (RDestroy, destroyH)
                ]
 
 
@@ -48,6 +50,29 @@ newH = do r <- runForm "new" (formlet Nothing)
 indexH :: AppHandler ()
 indexH = render "subject/index"
 
+destroyH :: AppHandler ()
+destroyH = do i <- getId
+              let k = intToKey i :: AutoKey Subject
+              runGH $ deleteBy k
+              redirectReferer
+
+
+showH :: AppHandler ()
+showH =
+  do i <- getId
+     let k = intToKey i :: AutoKey Subject
+     me <- fmap (Entity k) <$> runGH (get k)
+     case me of
+       Nothing -> pass
+       Just e -> do
+         as <- runGH $ selectEntity ArtistSubjectConstructor (SubjectIdField ==. i)
+         artists <- mapM (\a -> do let k = intToKey (artistId (entityVal a))
+                                   r <- runGH $ get k
+                                   return $ fmap (Entity k) r) as
+         renderWithSplices "subject/show"
+                           (do "artists" ## mapSplices (runChildrenWith.artistSplices) (catMaybes artists)
+                               "count" ## textSplice (T.pack (show (length artists)))
+                               subjectSplices e)
 
 artistSubjectsResource :: Resource
 artistSubjectsResource = Resource "artistSubjects" "/admin/artistsubjects" [] []

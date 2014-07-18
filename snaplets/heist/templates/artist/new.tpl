@@ -1,7 +1,7 @@
 <apply template="page">
 
   <div class="container">
-    <bind tag="formAction"><artistCreatePath/></bind>
+    <bindStrict tag="formAction"><artistsCreatePath/></bindStrict>
     <apply template="_form"></apply>
   </div>
 
