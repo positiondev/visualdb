@@ -4,12 +4,17 @@ module Site
   ( app
   ) where
 
-import           Control.Monad.Trans
 import           Control.Applicative
+import           Control.Lens
+import           Control.Monad.Trans
+import           Data.ByteString                             (ByteString)
+import qualified Data.ByteString                             as B
+import qualified Data.Configurator                           as C
 import           Data.Monoid
-import           Data.ByteString (ByteString)
-import qualified Data.ByteString as B
-import qualified Data.Text as T
+import qualified Data.Text                                   as T
+import           Heist
+import qualified Heist.Interpreted                           as I
+import           Heist.Splices.BindStrict
 import           Snap.Core
 import           Snap.Snaplet
 import           Snap.Snaplet.Auth
@@ -17,26 +22,22 @@ import           Snap.Snaplet.Auth.Backends.JsonFile
 import           Snap.Snaplet.Heist
 import           Snap.Snaplet.Session.Backends.CookieSession
 import           Snap.Util.FileServe
-import           Heist
-import qualified Heist.Interpreted as I
-import           Heist.Splices.BindStrict
-import qualified Text.XmlHtml as X
-import qualified Data.Configurator as C
+import qualified Text.XmlHtml                                as X
 
 import           Database.Groundhog.Utils
-import           Snap.Snaplet.Groundhog.Postgresql
-import           Snap.Restful
 import           Snap.Extras
+import           Snap.Restful
+import           Snap.Snaplet.Groundhog.Postgresql
 
-import           FileStore
-import           Artist.Types
+import           Application
 import           Artist.Handler
 import           Artist.Splices
-import           Media.Types
-import           Media.Handler
-import           Subject.Handler
+import           Artist.Types
+import           FileStore
 import           Focus.Handler
-import           Application
+import           Media.Handler
+import           Media.Types
+import           Subject.Handler
 
 logoutH :: Handler App (AuthManager App) ()
 logoutH = logout >> redirect "/"
@@ -104,6 +105,6 @@ app = makeSnaplet "app" "" Nothing $ do
     addResource focusesResource focusesCrud [] [] h
     addResource artistFocusesResource artistFocusesCrud [] [] h
     addResource mediaResource mediaCrud [] [] h
-    addConfig h mempty { hcInterpretedSplices = globalSplices }
+    addConfig h $ set scInterpretedSplices globalSplices  mempty
     addAuthSplices h auth
     return $ App h s a gh (Directory (stpth ++ "/store"))
